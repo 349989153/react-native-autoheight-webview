@@ -12,10 +12,10 @@ import { reduceData, getWidth, isSizeChanged, shouldUpdate } from './utils';
 
 const AutoHeightWebView = React.memo(
   forwardRef((props, ref) => {
-    const { style, onMessage, onSizeUpdated, scrollEnabledWithZoomedin, scrollEnabled } = props;
+    const { style, onMessage, onSizeUpdated, scrollEnabledWithZoomedin, scrollEnabled, initialHeight } = props;
 
     const [size, setSize] = useState({
-      height: style && style.height ? style.height : 0,
+      height: style && style.height ? style.height : initialHeight,
       width: getWidth(style)
     });
     const [scrollable, setScrollable] = useState(false);
@@ -93,6 +93,7 @@ AutoHeightWebView.propTypes = {
   customStyle: PropTypes.string,
   viewportContent: PropTypes.string,
   scrollEnabledWithZoomedin: PropTypes.bool,
+  initialHeight: PropTypes.number,
   // webview props
   originWhitelist: PropTypes.arrayOf(PropTypes.string),
   onMessage: PropTypes.func,
@@ -103,6 +104,7 @@ AutoHeightWebView.propTypes = {
 let defaultProps = {
   showsVerticalScrollIndicator: false,
   showsHorizontalScrollIndicator: false,
+  initialHeight: 0,
   originWhitelist: ['*']
 };
 
