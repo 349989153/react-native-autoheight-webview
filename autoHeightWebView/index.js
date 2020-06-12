@@ -13,6 +13,7 @@ import { reduceData, getWidth, isSizeChanged, shouldUpdate } from './utils';
 const AutoHeightWebView = React.memo(
   forwardRef((props, ref) => {
     const { style, onMessage, onSizeUpdated, scrollEnabledWithZoomedin, scrollEnabled, initialHeight } = props;
+    const innerRef = React.useRef(ref);
 
     const [size, setSize] = useState({
       height: style && style.height ? style.height : initialHeight,
@@ -36,10 +37,10 @@ const AutoHeightWebView = React.memo(
       !scrollEnabled && scrollEnabledWithZoomedin && setScrollable(!!zoomedin);
       const { height: previousHeight, width: previousWidth } = size;
       isSizeChanged({ height, previousHeight, width, previousWidth }) &&
-        setSize({
-          height,
-          width
-        });
+      setSize({
+        height,
+        width
+      });
     };
 
     const currentScrollEnabled = scrollEnabled === false && scrollEnabledWithZoomedin ? scrollable : scrollEnabled;
@@ -60,7 +61,7 @@ const AutoHeightWebView = React.memo(
     return (
       <WebView
         {...props}
-        ref={ref}
+        ref={innerRef}
         onMessage={handleMessage}
         style={[
           styles.webView,
@@ -70,8 +71,17 @@ const AutoHeightWebView = React.memo(
           },
           style
         ]}
-        injectedJavaScript={script}
         source={currentSource}
+        onLoadProgress={({ nativeEvent }) => {
+          console.log(nativeEvent.progress);
+          console.log(innerRef);
+          if (nativeEvent.progress > 0.5 && innerRef.current) {
+            innerRef.current.injectJavaScript(script);
+          }
+          if (props.onLoadProgress) {
+            props.onLoadProgress({ nativeEvent })
+          }
+        }}
         scrollEnabled={currentScrollEnabled}
       />
     );
@@ -109,14 +119,14 @@ let defaultProps = {
 };
 
 Platform.OS === 'android' &&
-  Object.assign(defaultProps, {
-    scalesPageToFit: false
-  });
+Object.assign(defaultProps, {
+  scalesPageToFit: false
+});
 
 Platform.OS === 'ios' &&
-  Object.assign(defaultProps, {
-    viewportContent: 'width=device-width'
-  });
+Object.assign(defaultProps, {
+  viewportContent: 'width=device-width'
+});
 
 AutoHeightWebView.defaultProps = defaultProps;
 
