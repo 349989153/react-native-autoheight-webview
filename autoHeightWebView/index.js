@@ -10,10 +10,30 @@ import { WebView } from 'react-native-webview';
 
 import { reduceData, getWidth, isSizeChanged, shouldUpdate } from './utils';
 
+function useCombinedRefs(...refs) {
+  const targetRef = React.useRef()
+
+  React.useEffect(() => {
+    refs.forEach(ref => {
+      if (!ref) return
+
+      if (typeof ref === 'function') {
+        ref(targetRef.current)
+      } else {
+        ref.current = targetRef.current
+      }
+    })
+  }, [refs])
+
+  return targetRef
+}
+
 const AutoHeightWebView = React.memo(
   forwardRef((props, ref) => {
     const { style, onMessage, onSizeUpdated, scrollEnabledWithZoomedin, scrollEnabled, initialHeight } = props;
-    const innerRef = React.useRef(ref);
+    // const innerRef = React.useRef(ref);
+    const innerRef = React.useRef(null)
+    const combinedRef = useCombinedRefs(ref, innerRef)
 
     const [size, setSize] = useState({
       height: style && style.height ? style.height : initialHeight,
@@ -61,7 +81,7 @@ const AutoHeightWebView = React.memo(
     return (
       <WebView
         {...props}
-        ref={innerRef}
+        ref={combinedRef}
         onMessage={handleMessage}
         style={[
           styles.webView,
@@ -74,9 +94,9 @@ const AutoHeightWebView = React.memo(
         source={currentSource}
         onLoadProgress={({ nativeEvent }) => {
           console.log(nativeEvent.progress);
-          console.log(innerRef);
-          if (nativeEvent.progress > 0.5 && innerRef.current) {
-            innerRef.current.injectJavaScript(script);
+          if (nativeEvent.progress > 0.5 && combinedRef.current) {
+            console.log('更新autoheight-webview高度');
+            combinedRef.current.injectJavaScript(script);
           }
           if (props.onLoadProgress) {
             props.onLoadProgress({ nativeEvent })
